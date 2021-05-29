@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Пиццерия у Артема</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"
+        integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+</head>
+
+<body class="mx-5">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-danger rounded">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Админ. панель</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="index.html">Заказы</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="addproduct.php">Продукты</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="addpayment.php">Способы оплаты</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="addclient.php">Клиенты</a>
+                        </li>
+                    </ul>
+                    <form action="../index.html" class="d-flex">
+                        <button class="btn btn-dark rounded" type="submit">Выйти</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="alert alert-success my-3" role="alert" id="success">Товары добавлены в корзину! Пицца не любит ждать
+            &#127829; :(</div>
+        <form method="POST" id="myfm">
+            <div class="col-md-7 col-lg-8">
+
+                <h4 class="mb-3">Меню</h4>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label for="search" class="form-label">Поиск:</label>
+                        <input type="text" class="form-control" name="search" id="search" placeholder="Пицца">
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <div id="table"></div>
+        </form>
+        <script>
+            $('#success').hide();
+            $(document).ready(function () {
+                $("#table").text('');
+                $.ajax({
+                    url: '../src/php/view/orders.php',
+                    type: 'POST',
+                    cache: false,
+                    data: null,
+                    dataType: "json",
+                    success: function (result) {
+                        if (result) {
+                            let id = result.orders.id_order[0];
+                            console.log(result);
+                            var res =
+                                '<table id="mytable" class="table table-hover table-responsive"><tr><th scope="col">№</th><th scope="col">Дата</th><th scope="col">Адрес доставки</th><th scope="col">Цена</th><th scope="col">Клиент</th><th scope="col">Телефон</th><th scope="col">Позиции</th><th scope="col">Статус</th><th scope="col"></th></tr>';
+                            for (var i = 0; i < result.orders.id_order.length; i++) {
+                                res += '<tr><th scope="row">' + result.orders.id_order[i] +
+                                    '</th><td>' + result.orders
+                                    .date_order[i] + '</td><td>' + result.orders
+                                    .delivery_adress[i] + '</td><td>' + result.orders.price[i] +
+                                    '</td><td>' +
+                                    result.orders.fio[i] + '</td><td>' +
+                                    result.orders
+                                    .phone_number[i] + '</td><td>' +
+                                    result.orders
+                                    .product_name[i] + '</td>';
+                                if (result.orders.active[i] == 1) {
+                                    res += '<td><strong>Активен</strong></td>';
+                                    res += '<td><button class="btn btn-danger" id="finish" value="' +
+                                    result.orders.id_order[i] +
+                                    '">Завершить</button></td>';
+                                } else if (result.orders.active[i] == 0) {
+                                    res += '<td><strong>Завершен</strong></td>';
+                                    res += '<td><button class="btn btn-danger" id="delete" value="' +
+                                    result.orders.id_order[i] +
+                                    '">Удалить</button></td>';
+                                }
+                            }
+                            res += '</tr></table>';
+                            console.log(res);
+                            $("#table").append(res);
+                        }
+                    }
+                });
+                $("#search").keyup(function () {
+                    _this = this;
+                    $.each($("#mytable tbody tr"), function () {
+                        if ($(this).text().toLowerCase().indexOf($(_this).val()
+                                .toLowerCase()) === -1) {
+                            $(this).hide();
+                        } else {
+                            $(this).show();
+                        }
+                    });
+                });
+                $(document).on('click', '#finish', function (e) {
+                    var id_order = $(this).attr("value");
+                    $.ajax({
+                            url: '../src/php/del/finishorder.php',
+                            type: 'POST',
+                            cache: false,
+                            data: {
+                                "id_order": id_order
+                            },
+                            dataType: "json",
+                        })
+                        .done(function () {
+                            console.log("success");
+                            $("#table").load(location.href + " #table");
+                        })
+                        .fail(function () {
+                            console.log("error");
+                            $("#table").load(location.href + " #table");
+                        });
+                });
+                $(document).on('click', '#delete', function (e) {
+                    var id_order = $(this).attr("value");
+                    $.ajax({
+                            url: '../src/php/del/delorder.php',
+                            type: 'POST',
+                            cache: false,
+                            data: {
+                                "id_order": id_order
+                            },
+                            dataType: "json",
+                        })
+                        .done(function () {
+                            console.log("success");
+                            $("#table").load(location.href + " #table");
+                        })
+                        .fail(function () {
+                            console.log("error");
+                            $("#table").load(location.href + " #table");
+                        });
+                });
+            });
+        </script>
+    </div>
+    <footer class="my-5 pt-5 text-muted text-center text-small">
+        <hr>
+        <p class="mb-1">&copy; 2021 Пиццерия у Артема</p>
+    </footer>
+</body>
+
+</html>
